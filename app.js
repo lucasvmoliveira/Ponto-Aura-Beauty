@@ -134,23 +134,18 @@ function populateColaboradores() {
 async function api(params) {
   if (!state.apiUrl) throw new Error("URL do Apps Script não configurada.");
   const url = new URL(state.apiUrl);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
-  const res  = await fetch(url.toString(), { method: "GET" });
+  Object.entries(params).forEach(([k,v]) => {
+    if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
+  });
+  const res  = await fetch(url.toString());
   const data = await res.json();
   if (data.error) throw new Error(data.error);
   return data;
 }
 
+// Apps Script não suporta CORS em POST — usa GET para tudo
 async function apiPost(body) {
-  if (!state.apiUrl) throw new Error("URL do Apps Script não configurada.");
-  const res  = await fetch(state.apiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  return data;
+  return api(body);
 }
 
 // ── Config remota ─────────────────────────────────────────
