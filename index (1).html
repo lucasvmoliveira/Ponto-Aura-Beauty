@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ponto Digital — Controle de Horas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ── SIDEBAR ───────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-icon">⏱</span>
+    <span class="brand-name">Ponto<strong>Digital</strong></span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-view="dashboard">
+      <span class="nav-icon">◼</span> Dashboard
+    </a>
+    <a href="#" class="nav-item" data-view="registrar">
+      <span class="nav-icon">＋</span> Registrar Ponto
+    </a>
+    <a href="#" class="nav-item" data-view="historico">
+      <span class="nav-icon">≡</span> Histórico
+    </a>
+    <a href="#" class="nav-item" data-view="relatorio">
+      <span class="nav-icon">◎</span> Relatório / Banco
+    </a>
+    <a href="#" class="nav-item" data-view="config">
+      <span class="nav-icon">⚙</span> Configurações
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <span id="clock-display" class="live-clock">--:--:--</span>
+    <span class="clock-date" id="date-display"></span>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────────────────────── -->
+<main class="main-content">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-actions">
+      <select id="colaboradorSelect" class="colaborador-select">
+        <option value="">Carregando...</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║       VIEW: DASHBOARD        ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <section class="view active" id="view-dashboard">
+
+    <div class="kpi-grid">
+      <div class="kpi-card accent">
+        <div class="kpi-label">Saldo do Mês</div>
+        <div class="kpi-value" id="kpi-saldo">+00:00</div>
+        <div class="kpi-sub" id="kpi-saldo-sub">calculando...</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Dias Trabalhados</div>
+        <div class="kpi-value" id="kpi-dias">0</div>
+        <div class="kpi-sub" id="kpi-dias-sub">este mês</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Média Diária</div>
+        <div class="kpi-value" id="kpi-media">00:00</div>
+        <div class="kpi-sub">horas trabalhadas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Hoje</div>
+        <div class="kpi-value" id="kpi-hoje">--:--</div>
+        <div class="kpi-sub" id="kpi-hoje-sub">sem registro</div>
+      </div>
+    </div>
+
+    <!-- Mini gráfico de barras - últimos 10 dias -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Últimos 10 dias úteis</h3>
+        <span class="legend">
+          <span class="legend-dot pos"></span>Crédito
+          <span class="legend-dot neg"></span>Débito
+        </span>
+      </div>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+
+    <!-- Registro rápido do dia -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Ponto de Hoje</h3>
+        <span id="today-badge" class="badge"></span>
+      </div>
+      <div class="quick-punch" id="quickPunch">
+        <div class="punch-slots">
+          <div class="punch-slot" id="slot-entrada">
+            <div class="slot-label">Entrada</div>
+            <div class="slot-time" id="val-entrada">--:--</div>
+            <button class="punch-btn" onclick="baterPonto('Entrada')">Registrar</button>
+          </div>
+          <div class="punch-arrow">→</div>
+          <div class="punch-slot" id="slot-saida-almoco">
+            <div class="slot-label">Saída Almoço</div>
+            <div class="slot-time" id="val-saida-almoco">--:--</div>
+            <button class="punch-btn" onclick="baterPonto('SaidaAlmoco')">Registrar</button>
+          </div>
+          <div class="punch-arrow">→</div>
+          <div class="punch-slot" id="slot-retorno-almoco">
+            <div class="slot-label">Retorno</div>
+            <div class="slot-time" id="val-retorno-almoco">--:--</div>
+            <button class="punch-btn" onclick="baterPonto('RetornoAlmoco')">Registrar</button>
+          </div>
+          <div class="punch-arrow">→</div>
+          <div class="punch-slot" id="slot-saida">
+            <div class="slot-label">Saída</div>
+            <div class="slot-time" id="val-saida">--:--</div>
+            <button class="punch-btn" onclick="baterPonto('Saida')">Registrar</button>
+          </div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="dayProgress" style="width:0%"></div>
+        </div>
+        <div class="progress-labels">
+          <span>00:00</span>
+          <span id="progressLabel">0% do dia</span>
+          <span id="horasEsperadas">Meta: 8h</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║    VIEW: REGISTRAR PONTO     ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <section class="view" id="view-registrar">
+
+    <div class="card form-card">
+      <div class="card-header">
+        <h3>Lançamento Manual</h3>
+        <span class="card-hint">Use para corrigir ou lançar dias anteriores</span>
+      </div>
+      <form id="pontoForm" onsubmit="salvarRegistro(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="f-data" required/>
+          </div>
+          <div class="form-group">
+            <label>Colaborador</label>
+            <select id="f-colaborador" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row four-col">
+          <div class="form-group">
+            <label>Entrada</label>
+            <input type="time" id="f-entrada" required/>
+          </div>
+          <div class="form-group">
+            <label>Saída Almoço</label>
+            <input type="time" id="f-saida-almoco"/>
+          </div>
+          <div class="form-group">
+            <label>Retorno Almoço</label>
+            <input type="time" id="f-retorno-almoco"/>
+          </div>
+          <div class="form-group">
+            <label>Saída</label>
+            <input type="time" id="f-saida"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group preview-group">
+            <label>Pré-visualização</label>
+            <div class="preview-box" id="previewBox">
+              <span class="preview-item">⏱ Trabalhado: <strong id="prev-trabalhado">--:--</strong></span>
+              <span class="preview-item">🎯 Esperado: <strong id="prev-esperado">08:00</strong></span>
+              <span class="preview-item" id="prev-saldo-wrap">⚖ Saldo: <strong id="prev-saldo">--:--</strong></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Observação</label>
+            <input type="text" id="f-obs" placeholder="Ex: home office, atestado..."/>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-ghost" onclick="resetForm()">Limpar</button>
+          <button type="submit" class="btn-primary" id="submitBtn">
+            <span id="submitLabel">Salvar Registro</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║       VIEW: HISTÓRICO        ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <section class="view" id="view-historico">
+
+    <div class="filters-bar">
+      <input type="month" id="h-mes" class="filter-input"/>
+      <select id="h-colab" class="filter-input">
+        <option value="">Todos</option>
+      </select>
+      <button class="btn-primary sm" onclick="carregarHistorico()">Filtrar</button>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table class="data-table" id="historicoTable">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Colaborador</th>
+              <th>Entrada</th>
+              <th>S. Almoço</th>
+              <th>Retorno</th>
+              <th>Saída</th>
+              <th>Trabalhado</th>
+              <th>Saldo</th>
+              <th>Obs.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="historicoBody">
+            <tr><td colspan="10" class="empty-row">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║      VIEW: RELATÓRIO         ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <section class="view" id="view-relatorio">
+
+    <div class="filters-bar">
+      <label class="filter-label">De:</label>
+      <input type="date" id="r-inicio" class="filter-input"/>
+      <label class="filter-label">Até:</label>
+      <input type="date" id="r-fim" class="filter-input"/>
+      <select id="r-colab" class="filter-input">
+        <option value="">Todos</option>
+      </select>
+      <button class="btn-primary sm" onclick="gerarRelatorio()">Gerar</button>
+    </div>
+
+    <div class="kpi-grid mini" id="relatorioKpis"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Banco de Horas por Colaborador</h3>
+      </div>
+      <div id="bancoPorColab"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Detalhamento do Período</h3>
+        <button class="btn-ghost sm" onclick="exportarCSV()">⬇ Exportar CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th><th>Colaborador</th><th>Trabalhado</th>
+              <th>Esperado</th><th>Saldo Dia</th><th>Saldo Acum.</th>
+            </tr>
+          </thead>
+          <tbody id="relatorioBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║      VIEW: CONFIG            ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <section class="view" id="view-config">
+
+    <div class="card form-card">
+      <div class="card-header">
+        <h3>Configurações do Sistema</h3>
+      </div>
+      <form id="configForm" onsubmit="salvarConfig(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>URL do Google Apps Script</label>
+            <input type="url" id="c-url" placeholder="https://script.google.com/macros/s/.../exec" required/>
+            <span class="field-hint">Cole aqui a URL da sua implantação do Apps Script</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Horas Diárias Esperadas</label>
+            <input type="number" id="c-horas" value="8" min="1" max="12" step="0.5"/>
+          </div>
+          <div class="form-group">
+            <label>Tolerância (minutos)</label>
+            <input type="number" id="c-tolerancia" value="10" min="0" max="60"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Colaboradores <span class="field-hint">(um por linha)</span></label>
+          <textarea id="c-colaboradores" rows="5" placeholder="João Silva&#10;Maria Souza&#10;Pedro Lima"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-ghost" onclick="testarConexao()">Testar Conexão</button>
+          <button type="submit" class="btn-primary">Salvar Configurações</button>
+        </div>
+        <div id="config-status" class="config-status"></div>
+      </form>
+    </div>
+
+    <!-- Instruções -->
+    <div class="card instructions-card">
+      <div class="card-header"><h3>Como Configurar a Planilha</h3></div>
+      <ol class="instructions">
+        <li>Abra o <strong>Google Sheets</strong> e crie uma nova planilha</li>
+        <li>Vá em <strong>Extensões → Apps Script</strong></li>
+        <li>Apague o código padrão e cole o conteúdo do arquivo <code>Code.gs</code></li>
+        <li>Salve e clique em <strong>Executar → initSpreadsheet</strong> para criar as abas</li>
+        <li>Clique em <strong>Implantar → Nova Implantação</strong></li>
+        <li>Tipo: <strong>App da Web</strong>, Acesso: <strong>Qualquer pessoa</strong></li>
+        <li>Copie a URL gerada e cole no campo acima</li>
+      </ol>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- ── TOAST ──────────────────────────────────────────────── -->
+<div id="toast" class="toast"></div>
+
+<!-- ── MODAL ──────────────────────────────────────────────── -->
+<div id="modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 id="modal-title">Editar Registro</h3>
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" id="modal-confirm">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
